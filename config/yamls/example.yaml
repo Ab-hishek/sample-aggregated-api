@@ -1,0 +1,8 @@
+apiVersion: demo.sample.abhishek.io/v1alpha1
+kind: Person
+metadata:
+  name: abhishek
+  namespace: person
+spec:
+  name: abhishek
+  age: 23

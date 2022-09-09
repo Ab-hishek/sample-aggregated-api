@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-aggregated-api-apiserver
+  namespace: person
+  labels:
+    api: sample-aggregated-api
+    apiserver: "true"
+spec:
+  selector:
+    matchLabels:
+      api: sample-aggregated-api
+      apiserver: "true"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        api: sample-aggregated-api
+        apiserver: "true"
+    spec:
+      containers:
+      - name: apiserver
+        image: abhishek09dh/sample-aggregator:v1alpha1
+        volumeMounts:
+        - name: apiserver-certs
+          mountPath: /apiserver.local.config/certificates
+          readOnly: true
+        command:
+        - "./apiserver"
+        args:
+        - "--etcd-servers=http://etcd-svc:2379"
+        - "--tls-cert-file=/apiserver.local.config/certificates/tls.crt"
+        - "--tls-private-key-file=/apiserver.local.config/certificates/tls.key"
+        - "--audit-log-path=-"
+        - "--feature-gates=APIPriorityAndFairness=false"
+        - "--audit-log-maxage=0"
+        - "--audit-log-maxbackup=0"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 30Mi
+      volumes:
+      - name: apiserver-certs
+        secret:
+          secretName: sample-aggregated-api
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: sample-aggregated-api
+  namespace: person
+  labels:
+    api: sample-aggregated-api
+    apiserver: "true"
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR0RENDQXB5Z0F3SUJBZ0lJSkMzcEpxOEN6Ym93RFFZSktvWklodmNOQVFFTEJRQXdkVEVMTUFrR0ExVUUKQmhNQ2RXNHhDekFKQmdOVkJBZ01Bbk4wTVFvd0NBWURWUVFIREFGc01Rb3dDQVlEVlFRS0RBRnZNUXN3Q1FZRApWUVFMREFKdmRURTBNRElHQTFVRUF3d3JjMkZ0Y0d4bExXRm5aM0psWjJGMFpXUXRZWEJwTFdObGNuUnBabWxqCllYUmxMV0YxZEdodmNtbDBlVEFlRncweU1qQTVNRGd4TkRRNE1EUmFGdzB6TWpBNU1EVXhORFE0TURSYU1Dc3gKS1RBbkJnTlZCQU1USUhOaGJYQnNaUzFoWjJkeVpXZGhkR1ZrTFdGd2FTNXdaWEp6YjI0dWMzWmpNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF2VEhhSVVpWWhmTUswQ2hTajlPZ0Z1SXZTRHJBClJYME5Ca0RhR2kwZm1EUkVVNUJERGx4WUJRZUpMUlVqMVNlS2dFenhyUkZYd1dlRmRPOVJ0Z0Nkb0xnRkpZUFoKaGJxV1E5UHhnMTg2QUlDZ3dRSlNPYkRjejNqYWwxR2NrNWpIQkRsVTdrYjRlTVljU1dVYXRhUkxzTzRjVnNCWgpFT1BWaVM4bUQ4T1B0eFY2aFhHZmdqS1NGcVlvQThHRkoyTXpqTjhvVWZkVUtSNUI4NHN4clRlRnVMc3RPTUdLCjFXQjBicXlyYWNxWHFWQlcxczJKcUk3V3VpenJlYVRXU2krNE93NzZRRG9zVlVueVZtRjRIMXltOExoSW9yZ1IKN3AwdnpkS1BFeU1wbjJxMWtqMXhFb1QvT2FPL3pZL2hiaG9CaWVaWmlsVXBGQXBqQ0FDOUlQdmgrd0lEQVFBQgpvNEdSTUlHT01BNEdBMVVkRHdFQi93UUVBd0lGb0RBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUlLd1lCCkJRVUhBd0l3SHdZRFZSMGpCQmd3Rm9BVTIrRkc1cHVta05KR0czUXNKRElpa2tiRkJkUXdQQVlEVlIwUkJEVXcKTTRJSmJHOWpZV3hvYjNOMGdpQnpZVzF3YkdVdFlXZG5jbVZuWVhSbFpDMWhjR2t1Y0dWeWMyOXVMbk4yWTRjRQpmd0FBQVRBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQVNQTjlzcjBjWlpPamdHWDQwQzBKczlGbkVKZjA2VmtxClI0eEVNbkJLcmt0Lzd2MHhXcy83WFVSOFJ1ZXFLUFpZTkhqTTdaNThVVWY2SkVhdDFpcEpKK1BndG9TZTROa1oKS3U5MmUvL3Y1ak9mM3Y1RmVDODlWOFZEMy94bHQ0RDErTTJ3NWNsaElxNzUxbjZKdjlMYjBadFQyajJ5OTJFZwpKelFZcUNMVjN2bHk2bnJCQ2dtOVdab1dkbEZORmdsRDRVMDA5UVJCb0wzd0ZPVVpNRXJWZlNabTJaQ2JmOVI3ClBDdFNhQ1lCd3MyaFJLUHNSd0xETG01WU96SzdkVlRrSVV0TStoN2EvVUxQZEE2aHFSaFhheHVLd2lpZFk1VVoKZS84S0xNL3JwMkJLQkhsWHRGY1F1eXJYaHdoWnhPVDI0cWdRTjMvVFNzME5PVXB5K2RxL0JBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdlRIYUlVaVloZk1LMENoU2o5T2dGdUl2U0RyQVJYME5Ca0RhR2kwZm1EUkVVNUJECkRseFlCUWVKTFJVajFTZUtnRXp4clJGWHdXZUZkTzlSdGdDZG9MZ0ZKWVBaaGJxV1E5UHhnMTg2QUlDZ3dRSlMKT2JEY3ozamFsMUdjazVqSEJEbFU3a2I0ZU1ZY1NXVWF0YVJMc080Y1ZzQlpFT1BWaVM4bUQ4T1B0eFY2aFhHZgpnaktTRnFZb0E4R0ZKMk16ak44b1VmZFVLUjVCODRzeHJUZUZ1THN0T01HSzFXQjBicXlyYWNxWHFWQlcxczJKCnFJN1d1aXpyZWFUV1NpKzRPdzc2UURvc1ZVbnlWbUY0SDF5bThMaElvcmdSN3AwdnpkS1BFeU1wbjJxMWtqMXgKRW9UL09hTy96WS9oYmhvQmllWlppbFVwRkFwakNBQzlJUHZoK3dJREFRQUJBb0lCQVFDZUdFWmFnYnRTVTJHNQp4N2dXRDVVN0NnN1FvS2VDYVppMG5RU2owd2tQdXIxTnhzTUNBUkJjUTR2UmJGVGhEWVdpNktrYklkN2U4bzZHCnhHVFhYWFJhbE90WUNmRisyZ2d1N2JCblF1L0k4N05oRlh0NFVkNXlVRjc1QzIxM3VMYTFST00vcVhhQUZhd1YKZUxMMURqRmh5OWRLZHJqMmNDeEQwbTVQeGU4VjRSOC9HSnVhajhwVXYwYVVvMG5HU0swWUhEQjNjV1dsdnpJRApUUmFMek9SR2p2Y0p3WG5GN0tYbGk3S0p1Rkh5Rnl3RGZSd1ZJNTF0Qnp3OXBNSHdLemcyVG52aTdCWDFxL3I5CnhablJQV2lXU0hEQVFaOG0veldEcWUwR1U4QkhjYXU0SHl1dU0rc3dvMWxWd2Z6UlRkeWE3SGtmcm9CYklzNXAKTnFHTkZ2a0JBb0dCQVBNRU82bjJkT29ocWlmMEMwczhrbGR5dnA3R2Ivb1g2ZjJZM1VuR283cHpyZ1diWTBCSQpoQmYyaURHQVM4QWd5MFBUeGlKOEZURHFybEVkQy9IUmxlTHROb1VqQ1liZ05leDhwRVFhWEJnOTEwYXMrMVkvCnlZRlFwKzUvNlVBa2dXcFdhRXpCT0dFZnZoSGQrWjh5Y1E3Z1h3M1g0bVczRjRlTFE5Z0FNeTViQW9HQkFNZE4KZmR4VFdXamllL0FjcmdacUdtd1lTZVUrYUdIVXY0MTQyQlN5ckZOejdvNkNQQW0wK2V5YTZnR0JvWkVDb2twQQowbW5wY1Zvdzdjdm9qTnBHc0g1eFhDUGhyRkJDVnlEY2owenVaai9pNlExdi9yM0dOU0ttRk0yUDgwdHRHazVzCk9yR2lQeUVuM3luRk0yZ29JRlFPLy9BSlpjNFIwb1ZFemxpdmdhemhBb0dCQU9HSGV5dVg2eGJpV1R5czh0SkgKQzNVV3F5dEU4K1RBenNvb1ZLM0VLR3pBTUs5SmJ3bllncWFPaUFTUWtUeGo4dUFtcUltV2FFQTJlOElSVitWNgo0VVJ4YXhpUjFLU1ViZGJrTWJwMlVDTzdPSStCdDl0cVpVS2FyTTdkYklXM20xY3BpN0EzM1cvZGVwS3dVNXBYCndLN1NzY1J5SnN6STU1QkdRWmN6VUV4akFvR0FJZGdWN0drM0FLbWRORXdhZlRwZFhFZlBuSjg1YUl1Ukw3djYKcmFFZHhGb21nNHE0R1Vuak92dWZpenZ4TE1mT3VWOUNtL3VwWlJCMEFURnZZYzJwUVArTkR3Yk9sUjUrM3pTMQpIUEpLNk1SbW9RS0l0cjlHM0tocFZmTUE5S2tGVTVYcmJhaklvWis4dE1JcEZhSGl3NE44a00xM3ZVT25oVHdHCjhtWnpWZUVDZ1lBRThad3VKY1NEbXEzUWV4VWx6VUY4MzhGQVcwYmpMdWFuMW9vZ0ZiUHpSODJ3UzJFMDFJUHUKRjVHank3QU5DUUJGcGJPbnltRXQwejJnVU5lSzZWdXYvOW1aSTZPZGV4QmZlYmJPb1Q0U2Rmc2lmYVZnTUVXbQpPWG5ULzdjNVZ6czR5OEhRQkNOb01xSWpLL3ZaMk0vUnVHRVFOcUhQNlgrRXlRWTZQTjlpZXc9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-aggregated-api
+  namespace: person
+  labels:
+    api: sample-aggregated-api
+    apiserver: "true"
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 443
+  selector:
+    api: sample-aggregated-api
+    apiserver: "true"

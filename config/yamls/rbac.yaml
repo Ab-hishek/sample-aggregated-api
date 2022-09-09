@@ -1,0 +1,90 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sample-aggregated-api-apiserver-auth-reader
+rules:
+  - apiGroups:
+      - ""
+    resourceNames:
+      - extension-apiserver-authentication
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sample-aggregated-api-apiserver-auth-reader
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sample-aggregated-api-apiserver-auth-reader
+subjects:
+  - kind: ServiceAccount
+    namespace: person
+    name: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sample-aggregated-api-apiserver-auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    namespace: person
+    name: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sample-aggregated-api
+  namespace: person
+rules:
+  - apiGroups:
+      - 'demo.sample.abhishek.io'
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - ''
+    resources:
+      - 'configmaps'
+      - 'namespaces'
+    verbs:
+      - 'get'
+      - 'list'
+      - 'watch'
+  - apiGroups:
+      - 'admissionregistration.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'list'
+      - 'watch'
+  - nonResourceURLs:
+      - '*'
+    verbs:
+      - '*'
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sample-aggregated-api
+  namespace: person
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sample-aggregated-api
+subjects:
+  - kind: ServiceAccount
+    namespace: person
+    name: default
